@@ -65,6 +65,12 @@
       "max": 99999,
       "minlength":4,
       "maxlength":5
+    },
+    {
+      "key": "saveform",
+      "type": "checkbox",
+      "contentType": "boolean",
+      "label": "Sauvegarder les informations ci-dessus pour ma prochaine attestation",
     }
   ],
   [

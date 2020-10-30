@@ -1,7 +1,9 @@
 import { $, $$, downloadBlob } from './dom-utils'
-import { addSlash, getFormattedDate } from './util'
+import { addSlash, getFormattedDate, getFormattedHour } from './util'
 import pdfBase from '../certificate.pdf'
 import { generatePdf } from './pdf-util'
+
+const LOCAL_STORAGE_PROFILE_KEY = 'profile'
 
 const conditions = {
   '#field-firstname': {
@@ -53,20 +55,17 @@ function validateAriaFields () {
     .includes(true)
 }
 
-export function setReleaseDateTime (releaseDateInput) {
-  const loadedDate = new Date()
-  releaseDateInput.value = getFormattedDate(loadedDate)
-}
-
 export function getProfile (formInputs) {
   const fields = {}
   for (const field of formInputs) {
     let value = field.value
-    if (field.id === 'field-datesortie') {
+    if (field.name === 'saveform') {
+      value = field.checked
+    } else if (field.name === 'datesortie') {
       const dateSortie = field.value.split('-')
       value = `${dateSortie[2]}/${dateSortie[1]}/${dateSortie[0]}`
     }
-    fields[field.id.substring('field-'.length)] = value
+    fields[field.name] = value
   }
   return fields
 }
@@ -82,6 +81,28 @@ export function prepareInputs (formInputs, reasonInputs, reasonFieldset, reasonA
   formInputs.forEach((input) => {
     const exempleElt = input.parentNode.parentNode.querySelector('.exemple')
     const validitySpan = input.parentNode.parentNode.querySelector('.validity')
+
+    let initialValues
+    try {
+      initialValues = JSON.parse(localStorage.getItem(LOCAL_STORAGE_PROFILE_KEY))
+    } catch (e) {}
+
+    initialValues = initialValues || {}
+
+    const loadedDate = new Date()
+    initialValues.datesortie = getFormattedDate(loadedDate)
+    initialValues.heuresortie = getFormattedHour(loadedDate)
+
+    if (initialValues && initialValues[input.name]) {
+      if (input.name === 'datesortie') {
+        input.value = initialValues.datesortie.split('/').reverse().join('-')
+      } else if (input.name === 'saveform') {
+        input.checked = true
+      } else {
+        input.value = initialValues[input.name]
+      }
+    }
+
     if (input.placeholder && exempleElt) {
       input.addEventListener('input', (event) => {
         if (input.value) {
@@ -100,6 +121,14 @@ export function prepareInputs (formInputs, reasonInputs, reasonFieldset, reasonA
     const key = event.keyCode || event.charCode
     if (key !== 8 && key !== 46) {
       input.value = addSlash(input.value)
+    }
+  })
+
+  $('#field-saveform').addEventListener('change', function (event) {
+    event.preventDefault()
+    const input = event.target
+    if (!input.checked) {
+      localStorage.removeItem(LOCAL_STORAGE_PROFILE_KEY)
     }
   })
 
@@ -127,9 +156,17 @@ export function prepareInputs (formInputs, reasonInputs, reasonFieldset, reasonA
       return
     }
 
-    console.log(getProfile(formInputs), reasons)
+    const profile = getProfile(formInputs)
 
-    const pdfBlob = await generatePdf(getProfile(formInputs), reasons, pdfBase)
+    if (profile.saveform) {
+      const savedProfile = { ...profile }
+      delete savedProfile.heuresortie
+      delete savedProfile.datesortie
+      delete savedProfile['field-reason']
+      localStorage.setItem(LOCAL_STORAGE_PROFILE_KEY, JSON.stringify(savedProfile))
+    }
+
+    const pdfBlob = await generatePdf(profile, reasons, pdfBase)
 
     const creationInstant = new Date()
     const creationDate = creationInstant.toLocaleDateString('fr-CA')
@@ -155,7 +192,5 @@ export function prepareForm () {
   const reasonInputs = [...$$('input[name="field-reason"]')]
   const reasonFieldset = $('#reason-fieldset')
   const reasonAlert = reasonFieldset.querySelector('.msg-alert')
-  const releaseDateInput = $('#field-datesortie')
-  setReleaseDateTime(releaseDateInput)
   prepareInputs(formInputs, reasonInputs, reasonFieldset, reasonAlert, snackbar)
 }

@@ -27,7 +27,7 @@ const createFormGroup = ({
   placeholder = '',
   type = 'text',
 }) => {
-  const formGroup = createElement('div', { className: 'form-group' })
+  const formGroup = createElement('div', { className: type === 'checkbox' ? 'form-check' : 'form-group' })
   const labelAttrs = {
     for: `field-${name}`,
     id: `field-${name}-label`,
@@ -39,7 +39,7 @@ const createFormGroup = ({
   const inputAttrs = {
     autocomplete,
     autofocus,
-    className: 'form-control',
+    className: type === 'checkbox' ? 'form-check-input' : 'form-control',
     id: `field-${name}`,
     inputmode,
     min,
@@ -60,13 +60,19 @@ const createFormGroup = ({
   }
   const validity = createElement('span', validityAttrs)
 
-  const appendToFormGroup = appendTo(formGroup)
-  appendToFormGroup(labelEl)
-  appendToFormGroup(inputGroup)
+  if (type === 'checkbox') {
+    const appendToFormGroup = appendTo(formGroup)
+    appendToFormGroup(input)
+    appendToFormGroup(labelEl)
+  } else {
+    const appendToFormGroup = appendTo(formGroup)
+    appendToFormGroup(labelEl)
+    appendToFormGroup(inputGroup)
 
-  const appendToInputGroup = appendTo(inputGroup)
-  appendToInputGroup(input)
-  appendToInputGroup(validity)
+    const appendToInputGroup = appendTo(inputGroup)
+    appendToInputGroup(input)
+    appendToInputGroup(validity)
+  }
 
   return formGroup
 }
@@ -103,7 +109,7 @@ const createReasonFieldset = (reasonsData) => {
   const appendToFieldset = appendTo(fieldset)
 
   const legendAttrs = {
-    className: 'legend titre-3 ',
+    className: 'legend titre 3 ',
     innerHTML: 'Choisissez un motif de déplacement',
   }
   const legend = createElement('legend', legendAttrs)
@@ -112,8 +118,8 @@ const createReasonFieldset = (reasonsData) => {
   const textAlert = createElement('p', textAlertAttrs)
 
   const textSubscribeReasonAttrs = {
-    innerHTML: `certifie que mon déplacement est lié au motif suivant (cocher la case) autorisé en application des 
-    mesures générales nécessaires pour faire face à l'épidémie de Covid19 dans le cadre de l'état 
+    innerHTML: `certifie que mon déplacement est lié au motif suivant (cocher la case) autorisé en application des
+    mesures générales nécessaires pour faire face à l'épidémie de Covid19 dans le cadre de l'état
     d'urgence sanitaire <a class="footnote" id="footnote1" href="#footnote1">[1]</a>&nbsp;:`,
   }
 
