@@ -4,6 +4,11 @@ import pdfBase from '../certificate.pdf'
 import { generatePdf } from './pdf-util'
 
 const LOCAL_STORAGE_PROFILE_KEY = 'profile'
+const ls = window.localStorage || {
+  getItem: () => null,
+  setItem: () => undefined,
+  removeItem: () => undefined,
+}
 
 const conditions = {
   '#field-firstname': {
@@ -84,7 +89,7 @@ export function prepareInputs (formInputs, reasonInputs, reasonFieldset, reasonA
 
     let initialValues
     try {
-      initialValues = JSON.parse(localStorage.getItem(LOCAL_STORAGE_PROFILE_KEY))
+      initialValues = JSON.parse(ls.getItem(LOCAL_STORAGE_PROFILE_KEY))
     } catch (e) {}
 
     initialValues = initialValues || {}
@@ -128,7 +133,7 @@ export function prepareInputs (formInputs, reasonInputs, reasonFieldset, reasonA
     event.preventDefault()
     const input = event.target
     if (!input.checked) {
-      localStorage.removeItem(LOCAL_STORAGE_PROFILE_KEY)
+      ls.removeItem(LOCAL_STORAGE_PROFILE_KEY)
     }
   })
 
@@ -163,7 +168,7 @@ export function prepareInputs (formInputs, reasonInputs, reasonFieldset, reasonA
       delete savedProfile.heuresortie
       delete savedProfile.datesortie
       delete savedProfile['field-reason']
-      localStorage.setItem(LOCAL_STORAGE_PROFILE_KEY, JSON.stringify(savedProfile))
+      ls.setItem(LOCAL_STORAGE_PROFILE_KEY, JSON.stringify(savedProfile))
     }
 
     const pdfBlob = await generatePdf(profile, reasons, pdfBase)
